@@ -1,0 +1,6 @@
+*.txt
+*.wav
+.env
+
+.idea
+/backend/.env
