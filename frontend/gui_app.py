@@ -1,17 +1,32 @@
+import os
 import threading
 import tkinter as tk
 from tkinter import messagebox, scrolledtext
-import requests
+from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
+
+# Function to use OpenAI GPT4
+def get_definition(word):
+    completion = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "developer", "content": "You are a helpful assistant."},
+            {
+                "role": "user",
+                "content": "Write me the definition of this word: " + word
+            }
+        ]
+    )
+
+    return completion.choices[0].message.content
 
 
 def show_popup(word):
-    response = requests.get(f"https://en.wikipedia.org/api/rest_v1/page/summary/{word}")
-
-    if response.status_code == 200:
-        data = response.json()
-        definition = data.get("extract", "No definition found.")
-    else:
-        definition = "No definition found."
+    definition = get_definition(word=word)
 
     root = tk.Tk()
     root.withdraw()
@@ -59,9 +74,24 @@ class GUIApp:
 
     def on_word_click(self, event):
         index = self.text_area.index(tk.CURRENT)
-        word_start = self.text_area.search(r"\S", index, backwards=True, regexp=True) or index
-        word_end = self.text_area.search(r"\s", index, forwards=True, regexp=True) or index
+
+        word_start = self.text_area.search(r"\s", index, backwards=True, regexp=True)
+        if not word_start:
+            word_start = "1.0"  # If no whitespace is found, assume start of text
+        else:
+            word_start = self.text_area.index(f"{word_start} +1c")  # Move forward one char
+
+        word_end = self.text_area.search(r"\s", index, forwards=True, regexp=True)
+        if not word_end:
+            word_end = tk.END  # If no whitespace is found, assume end of text
+
         word = self.text_area.get(word_start, word_end).strip()
+
+        # Remove previous hyperlinks to avoid duplicates
+        self.text_area.tag_remove("highlight", "1.0", tk.END)
+
+        # Apply hyperlink style to the selected word
+        self.text_area.tag_add("highlight", word_start, word_end)
 
         if word:
             show_popup(word)

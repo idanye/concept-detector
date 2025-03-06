@@ -19,7 +19,7 @@ class TextExtractor:
             # Final cleanup: Remove excessive spaces within lines
             cleaned_text = re.sub(r'[ \t]+', ' ', cleaned_text).strip()
 
-            return cleaned_text if cleaned_text else "No readable text found on this page."
+            return cleaned_text if cleaned_text else None
 
         except Exception as e:
             print(f"Error fetching URL: {e}")
@@ -33,7 +33,7 @@ class TextExtractor:
 
             cleaned_text = re.sub(r'\s+', ' ', text).strip()
 
-            return cleaned_text if cleaned_text else "No readable text found in the file."
+            return cleaned_text if cleaned_text else None
 
         except Exception as e:
             print(f"Error reading file: {e}")
